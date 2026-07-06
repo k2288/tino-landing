@@ -238,11 +238,21 @@
   #map-canvas{ position:absolute; inset:0; z-index:0; opacity:0.9; }
 
   .map-track{
-    position:absolute; top:0; right:0; height:100%; width:260vw;
+    position:absolute; top:0; right:auto; left:0; height:100%; width:220vw;
     will-change: transform;
   }
+  .map-track::before{
+    content:""; position:absolute; inset:12% 0 10%; pointer-events:none; opacity:.55;
+    background:
+      radial-gradient(ellipse at 18% 48%, rgba(70,110,250,.18), transparent 18%),
+      radial-gradient(ellipse at 50% 56%, rgba(210,177,86,.14), transparent 16%),
+      radial-gradient(ellipse at 78% 44%, rgba(215,138,51,.12), transparent 15%),
+      linear-gradient(115deg, transparent 9%, rgba(255,255,255,.06) 9.2%, transparent 9.8%, transparent 35%, rgba(255,255,255,.045) 35.2%, transparent 35.8%),
+      linear-gradient(23deg, transparent 18%, rgba(70,110,250,.08) 18.2%, transparent 18.8%, transparent 62%, rgba(255,255,255,.045) 62.2%, transparent 62.8%);
+    filter: blur(.2px);
+  }
   .map-node{
-    position:absolute; top:52%; transform:translateY(-50%);
+    position:absolute; top:52%; transform:translate(-50%, -50%);
     display:flex; flex-direction:column; align-items:center; gap:14px;
   }
   .node-dot{
@@ -384,18 +394,18 @@
       </div>
 
       <div class="map-track" id="mapTrack">
-        <div class="map-node" id="node1" style="right:25%;">
+        <div class="map-node" id="node1" style="left:50vw;">
           <div class="node-dot"></div>
           <div class="node-callout">
             <div class="n-title">توکن انرژی خورشیدی</div>
             <div class="n-loc">نیروگاه خورشیدی — استان کرمان</div>
             <div class="node-stat"><span class="n-label">حجم تولید</span><span class="n-value">۲۰۰ مگاوات</span></div>
-            <div class="node-stat"><span class="n-label">پیشرفت نیروگاه</span><span class="n-value">۲۵٪</span></div>
+            <div class="node-stat"><span class="n-label">میزان پیشرفت نیروگاه</span><span class="n-value">۲۵ درصد</span></div>
             <div class="node-stat"><span class="n-label">ارزش کل نیروگاه</span><span class="n-value">۱۰۰ میلیون دلار</span></div>
           </div>
         </div>
 
-        <div class="map-node" id="node2" style="right:50%;">
+        <div class="map-node" id="node2" style="left:110vw;">
           <div class="node-dot"></div>
           <div class="node-callout">
             <div class="n-title">طلای تینو</div>
@@ -406,7 +416,7 @@
           </div>
         </div>
 
-        <div class="map-node" id="node3" style="right:75%;">
+        <div class="map-node" id="node3" style="left:170vw;">
           <div class="node-dot" style="background:var(--petrol); animation:none; opacity:.5;"></div>
           <div class="node-callout" style="opacity:0.001;">
             <div class="n-title">توکن نفت</div>
@@ -597,12 +607,11 @@ drawMap();
 window.addEventListener('resize', setupMapCanvas);
 
 /* ---------- Scene 3: scroll-scrubbed pan across nodes ----------
-   Track is 260vw wide, viewport shows 100vw at a time, anchored right:0.
-   At scroll progress p, visible range (as % of track) = [0.615p, 0.615p+0.385].
-   So a node at right:R% is centered in view when p = (R/100 - 0.1925) / 0.615.
-   Node positions (25%, 50%, 75%) solved to their exact center-points below. */
-const nodeTargets = [0.09, 0.50, 0.91];
-const maxShiftVw = 160;
+   Nodes are placed at fixed viewport-width coordinates inside a 220vw track.
+   Moving the track from 0 to -120vw centers 50vw, 110vw and 170vw
+   at progress 0, .5 and 1, so every pin receives a clear focus moment. */
+const nodeTargets = [0, 0.5, 1];
+const maxShiftVw = 120;
 
 ScrollTrigger.create({
   trigger: '#map-stage',
@@ -614,7 +623,7 @@ ScrollTrigger.create({
   invalidateOnRefresh: true,
   onUpdate: (self)=>{
     const p = self.progress;
-    gsap.set('#mapTrack', { x: (-p*maxShiftVw)+'vw' });
+    gsap.set('#mapTrack', { x: (-p*maxShiftVw)+'vw', force3D: true });
 
     // fade heading out once we start moving
     gsap.set('#mapHeadingText', { opacity: 1 - Math.min(p/0.12, 1) * 0.85 });
@@ -623,8 +632,8 @@ ScrollTrigger.create({
     [document.getElementById('node1'), document.getElementById('node2'), document.getElementById('node3')].forEach((node, i)=>{
       const dist = Math.abs(p - nodeTargets[i]);
       const callout = node.querySelector('.node-callout');
-      const op = gsap.utils.clamp(0, 1, 1 - dist/0.16);
-      gsap.set(callout, { opacity: op * (i===2 ? 0.75 : 1), y: 14 - (op*14) });
+      const op = gsap.utils.clamp(0, 1, 1 - dist/0.22);
+      gsap.set(callout, { opacity: op * (i===2 ? 0.75 : 1), y: 14 - (op*14), scale: 0.96 + (op * 0.04) });
       if(dist < bestDist){ bestDist = dist; activeIdx = i; }
     });
 
