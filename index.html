@@ -59,12 +59,14 @@
     display:flex; align-items:center; justify-content:space-between;
     padding: 22px 6vw;
     backdrop-filter: blur(0px);
+    -webkit-backdrop-filter: blur(0px);
     transition: backdrop-filter .3s ease, background .3s ease, border-color .3s ease;
     border-bottom: 1px solid transparent;
   }
   nav.scrolled{
     background: rgba(10,14,20,0.7);
     backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border-bottom: 1px solid var(--line);
   }
   nav .logo-mark{ width:30px; height:auto; opacity:0.95; }
@@ -169,6 +171,7 @@
     background: rgba(5,7,11,0.55); z-index:5;
     display:flex; align-items:center; justify-content:center;
     backdrop-filter: blur(1px);
+    -webkit-backdrop-filter: blur(1px);
   }
   .lock-scrim svg{ width:54px; height:54px; opacity:0.85; }
 
@@ -226,59 +229,91 @@
   #map-stage{
     position:relative; height:100vh; overflow:hidden;
     display:flex; align-items:center; justify-content:center;
-    background:var(--bg-void);
+    background:
+      radial-gradient(ellipse at 50% 0%, rgba(70,110,250,0.08), transparent 55%),
+      var(--bg-void);
   }
   .map-heading{
-    position:absolute; top:70px; right:0; left:0; z-index:6;
-    text-align:center; padding:0 6vw;
+    position:absolute; top:64px; right:0; left:0; z-index:6;
+    text-align:center; padding:0 6vw; height:110px;
+  }
+  .map-copy-layer{
+    position:absolute; inset:0 6vw; display:flex; flex-direction:column; align-items:center; justify-content:flex-start;
   }
   .map-heading .tag{ font-size:13px; color:var(--brand-blue); letter-spacing:.5px; margin-bottom:10px; }
   .map-heading h2{ font-size:clamp(20px,3vw,30px); font-weight:700; max-width:620px; margin:0 auto; line-height:1.5; }
 
   #map-canvas{ position:absolute; inset:0; z-index:0; opacity:0.9; }
 
+  /* slow-moving background terrain layer for parallax "camera" depth */
+  .map-terrain-wrap{
+    position:absolute; inset:0; z-index:1; will-change: transform;
+  }
+  #map-terrain{ position:absolute; top:0; left:0; height:100%; width:220vw; opacity:.9; }
+  #map-terrain .grid-line{ stroke: rgba(255,255,255,0.05); stroke-width:.12; }
+  #map-terrain .lat-arc{ stroke: rgba(255,255,255,0.06); stroke-width:.15; fill:none; }
+  #map-terrain .contour{ stroke: rgba(255,255,255,0.07); fill:none; stroke-width:.15; }
+  #map-terrain .connector{
+    fill:none; stroke:var(--brand-blue); stroke-width:.35; opacity:.65;
+    stroke-dasharray: 2 2; filter: drop-shadow(0 0 3px rgba(70,110,250,.6));
+  }
+
   .map-track{
-    position:absolute; top:0; right:0; height:100%; width:260vw;
-    will-change: transform;
+    position:absolute; top:0; right:auto; left:0; height:100%; width:220vw;
+    z-index:2; will-change: transform;
   }
   .map-node{
-    position:absolute; top:52%; transform:translateY(-50%);
+    position:absolute; top:52%; transform:translate(-50%, -50%);
     display:flex; flex-direction:column; align-items:center; gap:14px;
   }
+  .node-dot-wrap{ position:relative; width:14px; height:14px; }
+  .node-ring{
+    position:absolute; inset:-16px; border-radius:50%;
+    border:1px solid var(--ring-color, var(--brand-blue)); opacity:.35;
+  }
   .node-dot{
-    width:14px; height:14px; border-radius:50%; background:var(--brand-blue);
-    box-shadow: 0 0 0 0 rgba(70,110,250,0.6);
+    width:14px; height:14px; border-radius:50%; background:var(--dot-color, var(--brand-blue));
+    box-shadow: 0 0 0 0 var(--dot-glow, rgba(70,110,250,0.6)), 0 0 14px 2px var(--dot-glow, rgba(70,110,250,0.5));
     animation: pulse 2.4s ease-out infinite;
   }
   @keyframes pulse{
-    0%{ box-shadow: 0 0 0 0 rgba(70,110,250,0.55);}
-    70%{ box-shadow: 0 0 0 22px rgba(70,110,250,0);}
-    100%{ box-shadow: 0 0 0 0 rgba(70,110,250,0);}
+    0%{ box-shadow: 0 0 0 0 var(--dot-glow, rgba(70,110,250,0.55)), 0 0 14px 2px var(--dot-glow, rgba(70,110,250,0.5));}
+    70%{ box-shadow: 0 0 0 22px rgba(70,110,250,0), 0 0 14px 2px var(--dot-glow, rgba(70,110,250,0.5));}
+    100%{ box-shadow: 0 0 0 0 rgba(70,110,250,0), 0 0 14px 2px var(--dot-glow, rgba(70,110,250,0.5));}
   }
   .node-callout{
-    width:280px; background: rgba(22,28,39,0.72); backdrop-filter: blur(16px);
+    width:280px; background: rgba(22,28,39,0.72); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
     border:1px solid var(--line-strong); border-radius:20px; padding:20px;
     opacity:0; transform:translateY(14px);
     box-shadow: 0 24px 60px rgba(0,0,0,0.5);
   }
-  .node-callout .n-title{ font-size:15px; font-weight:700; margin-bottom:2px; }
+  .node-callout .n-title{ font-size:15px; font-weight:700; margin-bottom:2px; display:flex; align-items:center; gap:8px; }
+  .node-callout .n-title .n-swatch{ width:9px; height:9px; border-radius:50%; background:var(--dot-color, var(--brand-blue)); flex-shrink:0; }
   .node-callout .n-loc{ font-size:12px; color:var(--text-muted); margin-bottom:14px; }
+  .node-callout .n-desc{ font-size:12px; color:var(--text-muted); line-height:1.8; margin-top:12px; padding-top:12px; border-top:1px solid var(--line); }
   .node-stat{ display:flex; justify-content:space-between; font-size:12.5px; padding:7px 0; border-top:1px solid var(--line); }
   .node-stat:first-of-type{ border-top:none; }
   .node-stat .n-label{ color:var(--text-muted); }
   .node-stat .n-value{ font-weight:700; }
+  .n-status{ font-size:11px; padding:2px 9px; border-radius:100px; border:1px solid var(--line-strong); color:var(--text-faint); }
+  .n-status.on{ color:#3ddc84; border-color:rgba(61,220,132,.35); background:rgba(61,220,132,.08); }
 
   .map-progress{
-    position:absolute; bottom:44px; right:0; left:0; z-index:6;
-    display:flex; align-items:center; justify-content:center; gap:10px;
+    position:absolute; bottom:40px; right:0; left:0; z-index:6;
+    display:flex; align-items:center; justify-content:center; gap:16px;
     font-size:12px; color:var(--text-faint);
   }
-  .map-progress .dots{ display:flex; gap:7px; }
-  .map-progress .mdot{ width:6px; height:6px; border-radius:50%; background:var(--line-strong); transition:background .3s ease, transform .3s ease; }
-  .map-progress .mdot.on{ background:var(--brand-blue); transform:scale(1.3); }
+  .map-progress .dots{ display:flex; gap:22px; }
+  .map-progress .mdot-item{ display:flex; flex-direction:column; align-items:center; gap:6px; }
+  .map-progress .mdot{ width:6px; height:6px; border-radius:50%; background:var(--line-strong); transition:background .3s ease, transform .3s ease, box-shadow .3s ease; }
+  .map-progress .mdot.on{ background:var(--dot-color, var(--brand-blue)); transform:scale(1.3); box-shadow:0 0 8px var(--dot-glow, rgba(70,110,250,.6)); }
+  .map-progress .mlabel{ font-size:11px; color:var(--text-faint); transition:color .3s ease; }
+  .map-progress .mlabel.on{ color:var(--text-muted); }
 
   @media (max-width: 640px){
     .node-callout{ width:220px; padding:16px; }
+    .map-progress .dots{ gap:14px; }
+    .map-progress .mlabel{ font-size:10px; }
   }
 
   @media (prefers-reduced-motion: reduce){
@@ -378,40 +413,74 @@
   <section id="map-stage">
       <canvas id="map-canvas"></canvas>
 
+      <div class="map-terrain-wrap" id="mapTerrainWrap">
+        <svg id="map-terrain" viewBox="0 0 220 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- longitude ticks -->
+          <g class="grid-line">
+            <line x1="20" y1="0" x2="20" y2="100"/><line x1="40" y1="0" x2="40" y2="100"/>
+            <line x1="60" y1="0" x2="60" y2="100"/><line x1="80" y1="0" x2="80" y2="100"/>
+            <line x1="100" y1="0" x2="100" y2="100"/><line x1="120" y1="0" x2="120" y2="100"/>
+            <line x1="140" y1="0" x2="140" y2="100"/><line x1="160" y1="0" x2="160" y2="100"/>
+            <line x1="180" y1="0" x2="180" y2="100"/><line x1="200" y1="0" x2="200" y2="100"/>
+          </g>
+          <!-- latitude arcs, abstract terrain curvature -->
+          <path class="lat-arc" d="M0,30 Q110,10 220,30"/>
+          <path class="lat-arc" d="M0,52 Q110,52 220,52"/>
+          <path class="lat-arc" d="M0,74 Q110,92 220,74"/>
+          <!-- decorative contour rings around each asset location -->
+          <circle class="contour" cx="50" cy="52" r="8"/>
+          <circle class="contour" cx="50" cy="52" r="14"/>
+          <circle class="contour" cx="110" cy="52" r="8"/>
+          <circle class="contour" cx="110" cy="52" r="14"/>
+          <circle class="contour" cx="170" cy="52" r="8"/>
+          <circle class="contour" cx="170" cy="52" r="14"/>
+          <!-- glowing path connecting the live assets -->
+          <path class="connector" id="mapConnector" d="M50,52 Q80,32 110,52 Q140,74 170,52"/>
+        </svg>
+      </div>
+
       <div class="map-heading">
-        <div class="tag">شبکه دارایی‌های زنده</div>
-        <h2 id="mapHeadingText">تینو یک سیستم زنده است، نه یک فهرست.</h2>
+        <div class="map-copy-layer" id="mapCopy0">
+          <div class="tag">شبکه دارایی‌های زنده</div>
+          <h2>تینو یک سیستم زنده است، نه یک فهرست.</h2>
+        </div>
+        <div class="map-copy-layer" id="mapCopy1" style="opacity:0;">
+          <div class="tag">در حال بهره‌برداری</div>
+          <h2>هر نقطه، یک دارایی واقعی در حال بهره‌برداری است.</h2>
+        </div>
       </div>
 
       <div class="map-track" id="mapTrack">
-        <div class="map-node" id="node1" style="right:25%;">
-          <div class="node-dot"></div>
+        <div class="map-node" id="node1" style="left:50vw; --dot-color:var(--solar); --dot-glow:rgba(248,241,32,0.55); --ring-color:var(--solar);">
+          <div class="node-dot-wrap"><div class="node-ring"></div><div class="node-dot"></div></div>
           <div class="node-callout">
-            <div class="n-title">توکن انرژی خورشیدی</div>
-            <div class="n-loc">نیروگاه خورشیدی — استان کرمان</div>
+            <div class="n-title"><span class="n-swatch"></span>سانرژی ۱۸۲۱ — توکن انرژی خورشیدی</div>
+            <div class="n-loc">نیروگاه خورشیدی ۲۰۰ مگاواتی — استان کرمان</div>
             <div class="node-stat"><span class="n-label">حجم تولید</span><span class="n-value">۲۰۰ مگاوات</span></div>
-            <div class="node-stat"><span class="n-label">پیشرفت نیروگاه</span><span class="n-value">۲۵٪</span></div>
+            <div class="node-stat"><span class="n-label">میزان پیشرفت نیروگاه</span><span class="n-value">۲۵ درصد</span></div>
             <div class="node-stat"><span class="n-label">ارزش کل نیروگاه</span><span class="n-value">۱۰۰ میلیون دلار</span></div>
+            <div class="n-desc">دارایی دیجیتالی مبتنی بر منافع آتی یک نیروگاه خورشیدی، با مجوز رسمی از ساتبا و پیشرفت فیزیکی قابل ردیابی.</div>
           </div>
         </div>
 
-        <div class="map-node" id="node2" style="right:50%;">
-          <div class="node-dot"></div>
+        <div class="map-node" id="node2" style="left:110vw; --dot-color:var(--gold); --dot-glow:rgba(210,177,86,0.55); --ring-color:var(--gold);">
+          <div class="node-dot-wrap"><div class="node-ring"></div><div class="node-dot"></div></div>
           <div class="node-callout">
-            <div class="n-title">طلای تینو</div>
-            <div class="n-loc">ذخیره تحت نگهداری — انبار مستقل</div>
-            <div class="node-stat"><span class="n-label">وضعیت ذخیره</span><span class="n-value">تایید شده</span></div>
+            <div class="n-title"><span class="n-swatch"></span>تینوگلد — طلای تینو</div>
+            <div class="n-loc">دارایی نقدشونده با پشتوانه طلای فیزیکی</div>
             <div class="node-stat"><span class="n-label">قیمت لحظه‌ای</span><span class="n-value">۳۷۰,۴۰۱ ریال</span></div>
+            <div class="node-stat"><span class="n-label">کارمزد معامله</span><span class="n-value">۰.۵٪</span></div>
             <div class="node-stat"><span class="n-label">قابلیت انتقال</span><span class="n-value">فعال</span></div>
           </div>
         </div>
 
-        <div class="map-node" id="node3" style="right:75%;">
-          <div class="node-dot" style="background:var(--petrol); animation:none; opacity:.5;"></div>
-          <div class="node-callout" style="opacity:0.001;">
-            <div class="n-title">توکن نفت</div>
-            <div class="n-loc">پتروفلو — به‌زودی</div>
-            <div class="node-stat"><span class="n-label">وضعیت</span><span class="n-value">در حال راه‌اندازی</span></div>
+        <div class="map-node" id="node3" style="left:170vw; --dot-color:var(--petrol); --dot-glow:rgba(215,138,51,0.45); --ring-color:var(--petrol);">
+          <div class="node-dot-wrap"><div class="node-ring"></div><div class="node-dot" style="opacity:.55; animation:none;"></div></div>
+          <div class="node-callout">
+            <div class="n-title"><span class="n-swatch"></span>پتروفلو — توکن نفت</div>
+            <div class="n-loc">در مسیر راه‌اندازی <span class="n-status">به‌زودی</span></div>
+            <div class="node-stat"><span class="n-label">قیمت مرجع</span><span class="n-value">۲۰,۴۵۱ ریال</span></div>
+            <div class="node-stat"><span class="n-label">وضعیت</span><span class="n-value">در انتظار فعال‌سازی</span></div>
           </div>
         </div>
       </div>
@@ -419,9 +488,18 @@
       <div class="map-progress">
         <span>پیمایش شبکه</span>
         <div class="dots">
-          <div class="mdot" id="mdot0"></div>
-          <div class="mdot" id="mdot1"></div>
-          <div class="mdot" id="mdot2"></div>
+          <div class="mdot-item">
+            <div class="mdot" id="mdot0" style="--dot-color:var(--solar); --dot-glow:rgba(248,241,32,0.6);"></div>
+            <div class="mlabel" id="mlabel0">کرمان</div>
+          </div>
+          <div class="mdot-item">
+            <div class="mdot" id="mdot1" style="--dot-color:var(--gold); --dot-glow:rgba(210,177,86,0.6);"></div>
+            <div class="mlabel" id="mlabel1">خزانه طلا</div>
+          </div>
+          <div class="mdot-item">
+            <div class="mdot" id="mdot2" style="--dot-color:var(--petrol); --dot-glow:rgba(215,138,51,0.6);"></div>
+            <div class="mlabel" id="mlabel2">پتروفلو</div>
+          </div>
         </div>
       </div>
   </section>
@@ -597,39 +675,65 @@ drawMap();
 window.addEventListener('resize', setupMapCanvas);
 
 /* ---------- Scene 3: scroll-scrubbed pan across nodes ----------
-   Track is 260vw wide, viewport shows 100vw at a time, anchored right:0.
-   At scroll progress p, visible range (as % of track) = [0.615p, 0.615p+0.385].
-   So a node at right:R% is centered in view when p = (R/100 - 0.1925) / 0.615.
-   Node positions (25%, 50%, 75%) solved to their exact center-points below. */
-const nodeTargets = [0.09, 0.50, 0.91];
-const maxShiftVw = 160;
+   Nodes are placed at fixed viewport-width coordinates inside a 220vw track.
+   Moving the track from 0 to -120vw centers 50vw, 110vw and 170vw
+   at progress 0, .5 and 1, so every pin receives a clear focus moment.
+   The terrain layer moves at a slower rate (parallax) than the node
+   track to sell the sense of a camera gliding across a live map, and
+   a connecting path draws itself in as the camera advances. */
+const nodeTargets = [0, 0.5, 1];
+const maxShiftVw = 120;
+const terrainParallax = 0.65; // terrain moves slower than nodes -> depth
+
+const connectorPath = document.getElementById('mapConnector');
+const connectorLen = connectorPath ? connectorPath.getTotalLength() : 0;
+if(connectorPath){
+  connectorPath.style.strokeDasharray = connectorLen;
+  connectorPath.style.strokeDashoffset = connectorLen;
+}
 
 ScrollTrigger.create({
   trigger: '#map-stage',
   start: 'top top',
-  end: () => '+=' + (window.innerHeight * 3),
+  end: () => '+=' + (window.innerHeight * 3.4),
   scrub: 0.6,
   pin: true,
   pinSpacing: true,
   invalidateOnRefresh: true,
   onUpdate: (self)=>{
     const p = self.progress;
-    gsap.set('#mapTrack', { x: (-p*maxShiftVw)+'vw' });
 
-    // fade heading out once we start moving
-    gsap.set('#mapHeadingText', { opacity: 1 - Math.min(p/0.12, 1) * 0.85 });
+    // camera glide: node track pans fully, terrain pans slower for parallax depth
+    gsap.set('#mapTrack', { x: (-p*maxShiftVw)+'vw', force3D: true });
+    gsap.set('#mapTerrainWrap', { x: (-p*maxShiftVw*terrainParallax)+'vw', force3D: true });
+
+    // subtle camera "breathing" zoom as it glides between pins
+    const breathe = 1 + Math.sin(p * Math.PI * 3) * 0.012;
+    gsap.set('#mapTrack, #mapTerrainWrap', { scale: breathe });
+
+    // draw the connector line progressively as the camera advances
+    if(connectorPath){
+      connectorPath.style.strokeDashoffset = connectorLen * (1 - Math.min(p / 0.92, 1));
+    }
+
+    // crossfade the two heading copy layers: intro line, then payoff line
+    const crossStart = 0.14, crossEnd = 0.30;
+    const cross = gsap.utils.clamp(0, 1, (p - crossStart) / (crossEnd - crossStart));
+    gsap.set('#mapCopy0', { opacity: 1 - cross, y: -cross * 10 });
+    gsap.set('#mapCopy1', { opacity: cross, y: (1 - cross) * 10 });
 
     let activeIdx = 0, bestDist = 1;
     [document.getElementById('node1'), document.getElementById('node2'), document.getElementById('node3')].forEach((node, i)=>{
       const dist = Math.abs(p - nodeTargets[i]);
       const callout = node.querySelector('.node-callout');
-      const op = gsap.utils.clamp(0, 1, 1 - dist/0.16);
-      gsap.set(callout, { opacity: op * (i===2 ? 0.75 : 1), y: 14 - (op*14) });
+      const op = gsap.utils.clamp(0, 1, 1 - dist/0.22);
+      gsap.set(callout, { opacity: op, y: 14 - (op*14), scale: 0.96 + (op * 0.04) });
       if(dist < bestDist){ bestDist = dist; activeIdx = i; }
     });
 
     [0,1,2].forEach(i=>{
       document.getElementById('mdot'+i).classList.toggle('on', i===activeIdx);
+      document.getElementById('mlabel'+i).classList.toggle('on', i===activeIdx);
     });
   }
 });
