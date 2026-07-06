@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>tino — پیش‌نمایش صحنه ۰ تا ۲</title>
+<title>tino — پیش‌نمایش صحنه ۰ تا ۳</title>
 <style>
   @font-face{
     font-family:'IRANYekanFa';
@@ -245,25 +245,43 @@
 
   #map-canvas{ position:absolute; inset:0; z-index:0; opacity:0.9; }
 
-  /* slow-moving background terrain layer for parallax "camera" depth */
-  .map-terrain-wrap{
-    position:absolute; inset:0; z-index:1; will-change: transform;
+  /* stylized globe for the live infrastructure view (not a literal map provider) */
+  .globe-camera{
+    position:absolute; inset:0; z-index:1; width:220vw;
+    will-change: transform; transform-origin:50vw 52%;
   }
-  #map-terrain{ position:absolute; top:0; left:0; height:100%; width:220vw; opacity:.9; }
-  #map-terrain .grid-line{ stroke: rgba(255,255,255,0.05); stroke-width:.12; }
-  #map-terrain .lat-arc{ stroke: rgba(255,255,255,0.06); stroke-width:.15; fill:none; }
-  #map-terrain .contour{ stroke: rgba(255,255,255,0.07); fill:none; stroke-width:.15; }
-  #map-terrain .connector{
-    fill:none; stroke:var(--brand-blue); stroke-width:.35; opacity:.65;
-    stroke-dasharray: 2 2; filter: drop-shadow(0 0 3px rgba(70,110,250,.6));
+  .earth-globe{
+    position:absolute; top:50%; left:110vw; width:min(86vw,820px); aspect-ratio:1;
+    transform:translate(-50%,-50%); border-radius:50%; overflow:hidden;
+    background:
+      radial-gradient(circle at 32% 24%, rgba(70,110,250,.30), transparent 18%),
+      radial-gradient(circle at 62% 64%, rgba(248,241,32,.09), transparent 16%),
+      radial-gradient(circle at 50% 50%, #182235 0%, #0b111d 58%, #05070c 100%);
+    border:1px solid rgba(255,255,255,.10);
+    box-shadow: inset 28px -34px 70px rgba(0,0,0,.68), inset -18px 22px 60px rgba(70,110,250,.12), 0 48px 120px rgba(0,0,0,.62);
   }
-
+  .earth-globe::before{
+    content:""; position:absolute; inset:-8%; border-radius:50%;
+    background:
+      repeating-linear-gradient(90deg, transparent 0 8.5%, rgba(255,255,255,.045) 8.7% 8.9%, transparent 9.1% 17%),
+      repeating-linear-gradient(0deg, transparent 0 10%, rgba(255,255,255,.04) 10.2% 10.35%, transparent 10.55% 20%);
+    opacity:.75; transform:rotate(-10deg); mix-blend-mode:screen;
+  }
+  .earth-globe::after{
+    content:""; position:absolute; inset:0; border-radius:50%;
+    background: radial-gradient(circle at 71% 42%, transparent 0 48%, rgba(0,0,0,.34) 67%, rgba(0,0,0,.82) 100%);
+    pointer-events:none;
+  }
+  .iran-terrain{ position:absolute; inset:0; width:100%; height:100%; opacity:.92; filter: drop-shadow(0 0 18px rgba(70,110,250,.24)); }
+  .iran-land{ fill:rgba(44,64,94,.72); stroke:rgba(255,255,255,.14); stroke-width:.45; }
+  .iran-ridge{ fill:none; stroke:rgba(255,255,255,.08); stroke-width:.32; }
+  .globe-connector{ fill:none; stroke:rgba(70,110,250,.72); stroke-width:.55; stroke-dasharray:2 2; filter:drop-shadow(0 0 4px rgba(70,110,250,.8)); }
   .map-track{
     position:absolute; top:0; right:auto; left:0; height:100%; width:220vw;
     z-index:2; will-change: transform;
   }
   .map-node{
-    position:absolute; top:52%; transform:translate(-50%, -50%);
+    position:absolute; transform:translate(-50%, -50%);
     display:flex; flex-direction:column; align-items:center; gap:14px;
   }
   .node-dot-wrap{ position:relative; width:14px; height:14px; }
@@ -413,30 +431,15 @@
   <section id="map-stage">
       <canvas id="map-canvas"></canvas>
 
-      <div class="map-terrain-wrap" id="mapTerrainWrap">
-        <svg id="map-terrain" viewBox="0 0 220 100" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
-          <!-- longitude ticks -->
-          <g class="grid-line">
-            <line x1="20" y1="0" x2="20" y2="100"/><line x1="40" y1="0" x2="40" y2="100"/>
-            <line x1="60" y1="0" x2="60" y2="100"/><line x1="80" y1="0" x2="80" y2="100"/>
-            <line x1="100" y1="0" x2="100" y2="100"/><line x1="120" y1="0" x2="120" y2="100"/>
-            <line x1="140" y1="0" x2="140" y2="100"/><line x1="160" y1="0" x2="160" y2="100"/>
-            <line x1="180" y1="0" x2="180" y2="100"/><line x1="200" y1="0" x2="200" y2="100"/>
-          </g>
-          <!-- latitude arcs, abstract terrain curvature -->
-          <path class="lat-arc" d="M0,30 Q110,10 220,30"/>
-          <path class="lat-arc" d="M0,52 Q110,52 220,52"/>
-          <path class="lat-arc" d="M0,74 Q110,92 220,74"/>
-          <!-- decorative contour rings around each asset location -->
-          <circle class="contour" cx="50" cy="52" r="8"/>
-          <circle class="contour" cx="50" cy="52" r="14"/>
-          <circle class="contour" cx="110" cy="52" r="8"/>
-          <circle class="contour" cx="110" cy="52" r="14"/>
-          <circle class="contour" cx="170" cy="52" r="8"/>
-          <circle class="contour" cx="170" cy="52" r="14"/>
-          <!-- glowing path connecting the live assets -->
-          <path class="connector" id="mapConnector" d="M50,52 Q80,32 110,52 Q140,74 170,52"/>
-        </svg>
+      <div class="globe-camera" id="globeCamera">
+        <div class="earth-globe" aria-hidden="true">
+          <svg class="iran-terrain" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+            <path class="iran-land" d="M31,39 C36,30 48,26 58,31 C67,35 76,38 78,48 C80,59 72,68 62,70 C52,73 41,69 34,61 C27,54 26,47 31,39Z"/>
+            <path class="iran-ridge" d="M34,44 C43,39 52,39 61,43 C67,46 71,51 73,57"/>
+            <path class="iran-ridge" d="M38,57 C47,52 58,53 67,60"/>
+            <path class="globe-connector" id="mapConnector" d="M58,55 Q52,43 49,38 Q54,52 61,66"/>
+          </svg>
+        </div>
       </div>
 
       <div class="map-heading">
@@ -451,7 +454,7 @@
       </div>
 
       <div class="map-track" id="mapTrack">
-        <div class="map-node" id="node1" style="left:50vw; --dot-color:var(--solar); --dot-glow:rgba(248,241,32,0.55); --ring-color:var(--solar);">
+        <div class="map-node" id="node1" style="left:50vw; top:55%; --dot-color:var(--solar); --dot-glow:rgba(248,241,32,0.55); --ring-color:var(--solar);">
           <div class="node-dot-wrap"><div class="node-ring"></div><div class="node-dot"></div></div>
           <div class="node-callout">
             <div class="n-title"><span class="n-swatch"></span>سانرژی ۱۸۲۱ — توکن انرژی خورشیدی</div>
@@ -463,22 +466,22 @@
           </div>
         </div>
 
-        <div class="map-node" id="node2" style="left:110vw; --dot-color:var(--gold); --dot-glow:rgba(210,177,86,0.55); --ring-color:var(--gold);">
+        <div class="map-node" id="node2" style="left:110vw; top:38%; --dot-color:var(--gold); --dot-glow:rgba(210,177,86,0.55); --ring-color:var(--gold);">
           <div class="node-dot-wrap"><div class="node-ring"></div><div class="node-dot"></div></div>
           <div class="node-callout">
             <div class="n-title"><span class="n-swatch"></span>تینوگلد — طلای تینو</div>
-            <div class="n-loc">دارایی نقدشونده با پشتوانه طلای فیزیکی</div>
+            <div class="n-loc">تهران — دارایی نقدشونده با پشتوانه طلای فیزیکی</div>
             <div class="node-stat"><span class="n-label">قیمت لحظه‌ای</span><span class="n-value">۳۷۰,۴۰۱ ریال</span></div>
             <div class="node-stat"><span class="n-label">کارمزد معامله</span><span class="n-value">۰.۵٪</span></div>
             <div class="node-stat"><span class="n-label">قابلیت انتقال</span><span class="n-value">فعال</span></div>
           </div>
         </div>
 
-        <div class="map-node" id="node3" style="left:170vw; --dot-color:var(--petrol); --dot-glow:rgba(215,138,51,0.45); --ring-color:var(--petrol);">
+        <div class="map-node" id="node3" style="left:170vw; top:66%; --dot-color:var(--petrol); --dot-glow:rgba(215,138,51,0.45); --ring-color:var(--petrol);">
           <div class="node-dot-wrap"><div class="node-ring"></div><div class="node-dot" style="opacity:.55; animation:none;"></div></div>
           <div class="node-callout">
             <div class="n-title"><span class="n-swatch"></span>پتروفلو — توکن نفت</div>
-            <div class="n-loc">در مسیر راه‌اندازی <span class="n-status">به‌زودی</span></div>
+            <div class="n-loc">جنوب ایران — در مسیر راه‌اندازی <span class="n-status">به‌زودی</span></div>
             <div class="node-stat"><span class="n-label">قیمت مرجع</span><span class="n-value">۲۰,۴۵۱ ریال</span></div>
             <div class="node-stat"><span class="n-label">وضعیت</span><span class="n-value">در انتظار فعال‌سازی</span></div>
           </div>
@@ -494,11 +497,11 @@
           </div>
           <div class="mdot-item">
             <div class="mdot" id="mdot1" style="--dot-color:var(--gold); --dot-glow:rgba(210,177,86,0.6);"></div>
-            <div class="mlabel" id="mlabel1">خزانه طلا</div>
+            <div class="mlabel" id="mlabel1">تهران</div>
           </div>
           <div class="mdot-item">
             <div class="mdot" id="mdot2" style="--dot-color:var(--petrol); --dot-glow:rgba(215,138,51,0.6);"></div>
-            <div class="mlabel" id="mlabel2">پتروفلو</div>
+            <div class="mlabel" id="mlabel2">جنوب ایران</div>
           </div>
         </div>
       </div>
@@ -705,11 +708,11 @@ ScrollTrigger.create({
 
     // camera glide: node track pans fully, terrain pans slower for parallax depth
     gsap.set('#mapTrack', { x: (-p*maxShiftVw)+'vw', force3D: true });
-    gsap.set('#mapTerrainWrap', { x: (-p*maxShiftVw*terrainParallax)+'vw', force3D: true });
+    gsap.set('#globeCamera', { x: (-p*maxShiftVw*terrainParallax)+'vw', force3D: true });
 
     // subtle camera "breathing" zoom as it glides between pins
     const breathe = 1 + Math.sin(p * Math.PI * 3) * 0.012;
-    gsap.set('#mapTrack, #mapTerrainWrap', { scale: breathe });
+    gsap.set('#mapTrack, #globeCamera', { scale: breathe });
 
     // draw the connector line progressively as the camera advances
     if(connectorPath){
